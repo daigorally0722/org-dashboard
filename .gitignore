@@ -1,0 +1,13 @@
+/node_modules
+/.next
+/out
+/build
+next-env.d.ts
+.DS_Store
+*.pem
+.env*
+.vercel
+*.tsbuildinfo
+
+# Local Netlify folder
+.netlify
