@@ -2,15 +2,16 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { User as UserIcon, ListChecks, ChevronRight, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
-import type { BoardView, CategoryView, IndividualView, UserRow } from "@/lib/types";
+import type { BoardView, BusinessView, CategoryView, DepartmentView, IndividualView, UserRow } from "@/lib/types";
 import { CATEGORY_STYLE, CATEGORY_STYLE_DEFAULT } from "@/lib/layers";
-import TaskAreaGroups from "./TaskAreaGroups";
+import TaskRow from "./TaskRow";
 import { cn } from "@/lib/cn";
 
 // ============================================================================
-// OKRカスケード（横型ツリー）：会社 → 事業カテゴリ → 事業(サブ) → 個人 → タスク。
-// カテゴリ／事業ノードはクリックで折りたたみ・展開できる（ツリーを収縮して見やすく）。
-// 個人(下位)ノードをクリックすると、その人の「やること」がツリーの下に出る。
+// OKRカスケード（横型ツリー）：会社 → 事業カテゴリ → 事業(サブ) →〔部署〕→ 個人 → タスク。
+// 部署は規模の大きい事業（スキルゲット）だけに現れる“1列多い”階層。
+// カテゴリ／事業／部署ノードはクリックで折りたたみ・展開できる。
+// 個人ノードをクリックすると、その人の「やること」がツリーの下に出る。
 // ============================================================================
 
 interface Helpers {
@@ -72,7 +73,7 @@ function NodeShell({
       type={onClick ? "button" : undefined}
       onClick={onClick}
       className={cn(
-        "w-[230px] overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition-all",
+        "w-[220px] overflow-hidden rounded-xl border border-slate-200 bg-white text-left shadow-sm transition-all",
         onClick && "cursor-pointer hover:shadow-md",
       )}
       style={selected ? { boxShadow: `0 0 0 2px ${ringColor ?? barColor}` } : undefined}
@@ -118,18 +119,24 @@ export default function OkrCascade({ board, helpers }: { board: BoardView; helpe
   const allIndividuals = useMemo(() => {
     const list: IndividualView[] = [];
     for (const cat of board.categories) {
-      for (const sub of cat.subs) list.push(...sub.individuals);
+      for (const sub of cat.subs) {
+        for (const dept of sub.departments) list.push(...dept.individuals);
+        list.push(...sub.individuals);
+      }
       list.push(...cat.individuals);
     }
     return list;
   }, [board]);
 
-  // 折りたためるノード（カテゴリ＋サブ事業）の全id
+  // 折りたためるノード（カテゴリ＋事業＋部署）の全id
   const collapsibleIds = useMemo(() => {
     const ids: string[] = [];
     for (const cat of board.categories) {
       ids.push(cat.id);
-      for (const sub of cat.subs) ids.push(sub.id);
+      for (const sub of cat.subs) {
+        ids.push(sub.id);
+        for (const dept of sub.departments) ids.push(dept.id);
+      }
     }
     return ids;
   }, [board]);
@@ -197,12 +204,67 @@ export default function OkrCascade({ board, helpers }: { board: BoardView; helpe
     );
   };
 
+  const renderDepartment = (dept: DepartmentView, style: { bar: string; sub: string; tint: string }) => {
+    const n = dept.individuals.length;
+    const deptCollapsed = isCollapsed(dept.id);
+    return (
+      <li key={dept.id}>
+        <NodeShell
+          label="部署"
+          barColor={style.sub}
+          tintColor={style.tint}
+          collapsible={n > 0}
+          collapsed={deptCollapsed}
+          hiddenCount={n}
+          onClick={n > 0 ? () => toggle(dept.id) : undefined}
+        >
+          <p className="text-sm font-bold text-slate-900">{dept.name}</p>
+          <p className="mt-0.5 text-[11px] text-slate-500">{n > 0 ? `${n}名` : "メンバー未登録"}</p>
+        </NodeShell>
+        {n > 0 && !deptCollapsed && (
+          <ul>{dept.individuals.map((ind) => renderIndividual(ind, style.bar))}</ul>
+        )}
+      </li>
+    );
+  };
+
+  const renderBusiness = (sub: BusinessView, style: { bar: string; sub: string; tint: string; text: string }) => {
+    const childCount = sub.departments.length + sub.individuals.length;
+    const subCollapsed = isCollapsed(sub.id);
+    return (
+      <li key={sub.id}>
+        <NodeShell
+          label="事業"
+          barColor={style.sub}
+          tintColor={style.tint}
+          collapsible={childCount > 0}
+          collapsed={subCollapsed}
+          hiddenCount={childCount}
+          onClick={childCount > 0 ? () => toggle(sub.id) : undefined}
+        >
+          <p className="text-sm font-bold text-slate-900">
+            {sub.emoji} {sub.name}
+          </p>
+          <p className="mb-1.5 mt-0.5 text-[11px] leading-snug text-slate-600">🎯 {sub.objective}</p>
+          <KRList items={sub.keyResults} color={style.text} />
+        </NodeShell>
+
+        {childCount > 0 && !subCollapsed && (
+          <ul>
+            {sub.departments.map((dept) => renderDepartment(dept, style))}
+            {sub.individuals.map((ind) => renderIndividual(ind, style.bar))}
+          </ul>
+        )}
+      </li>
+    );
+  };
+
   return (
     <div className="space-y-4">
       {/* 操作バー：ツリーの展開／収束 */}
       <div className="flex items-center justify-end gap-2">
         <span className="mr-auto text-xs text-slate-400">
-          カテゴリ・事業のヘッダーをクリックで開閉できます
+          カテゴリ・事業・部署のヘッダーをクリックで開閉できます
         </span>
         <button
           type="button"
@@ -264,35 +326,7 @@ export default function OkrCascade({ board, helpers }: { board: BoardView; helpe
 
                         {showChildren && (
                           <ul>
-                            {cat.subs.map((sub) => {
-                              const subCollapsed = isCollapsed(sub.id);
-                              const hasPeople = sub.individuals.length > 0;
-                              return (
-                                <li key={sub.id}>
-                                  <NodeShell
-                                    label="事業"
-                                    barColor={style.sub}
-                                    tintColor={style.tint}
-                                    collapsible={hasPeople}
-                                    collapsed={subCollapsed}
-                                    hiddenCount={sub.individuals.length}
-                                    onClick={hasPeople ? () => toggle(sub.id) : undefined}
-                                  >
-                                    <p className="text-sm font-bold text-slate-900">
-                                      {sub.emoji} {sub.name}
-                                    </p>
-                                    <p className="mb-1.5 mt-0.5 text-[11px] leading-snug text-slate-600">
-                                      🎯 {sub.objective}
-                                    </p>
-                                    <KRList items={sub.keyResults} color={style.text} />
-                                  </NodeShell>
-
-                                  {hasPeople && !subCollapsed && (
-                                    <ul>{sub.individuals.map((ind) => renderIndividual(ind, style.bar))}</ul>
-                                  )}
-                                </li>
-                              );
-                            })}
+                            {cat.subs.map((sub) => renderBusiness(sub, style))}
                             {cat.individuals.map((ind) => renderIndividual(ind, style.bar))}
                           </ul>
                         )}
@@ -329,14 +363,22 @@ export default function OkrCascade({ board, helpers }: { board: BoardView; helpe
             </span>
           </div>
 
-          <TaskAreaGroups
-            areaGroups={selected.areaGroups}
-            tasks={selected.tasks}
-            getDone={helpers.getDone}
-            getCompletedByName={helpers.getCompletedByName}
-            canAudit={helpers.canAudit}
-            onToggle={helpers.onToggle}
-          />
+          <div className="space-y-1.5">
+            {selected.tasks.length === 0 ? (
+              <p className="text-xs text-slate-400">今週のタスクはありません</p>
+            ) : (
+              selected.tasks.map((t) => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  done={helpers.getDone(t.id)}
+                  completedByName={helpers.getCompletedByName(t.id)}
+                  canAudit={helpers.canAudit}
+                  onToggle={helpers.onToggle}
+                />
+              ))
+            )}
+          </div>
         </div>
       )}
     </div>

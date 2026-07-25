@@ -4,7 +4,7 @@ import type {
   BusinessRow,
   IndividualRow,
   TaskRow,
-  TaskAreaRow,
+  DepartmentRow,
 } from "./types";
 
 // ============================================================================
@@ -105,90 +105,105 @@ export const businesses: BusinessRow[] = [
   },
 ];
 
-// ── individuals（1人が複数事業に所属できる：user_id × business_id）──
+// ── departments（事業内の部署）。規模の大きいスキルゲットのみ部署を持つ ──
+export const departments: DepartmentRow[] = [
+  { id: "dept-sg-teacher", business_id: "biz-skillget", name: "先生管理", sort_order: 1 },
+  { id: "dept-sg-student", business_id: "biz-skillget", name: "生徒管理", sort_order: 2 },
+  { id: "dept-sg-coach", business_id: "biz-skillget", name: "コーチング", sort_order: 3 },
+  { id: "dept-sg-sns", business_id: "biz-skillget", name: "SNS", sort_order: 4 },
+];
+
+// ── individuals（1人が複数事業・複数部署に所属できる：user_id × business_id × department_id）──
 export const individuals: IndividualRow[] = [
-  // 石川：英会話（スキルゲット）
+  // 石川：英会話（スキルゲット）＝代表なので4部署すべてに登場
   {
-    id: "ind-ishikawa-skillget", user_id: "u-ishikawa", business_id: "biz-skillget",
-    objective: "英会話事業の代表として、集客〜受講運営を回す",
-    key_results: ["今週の実行タスクをすべて完了する"],
+    id: "ind-ishikawa-sg-teacher", user_id: "u-ishikawa", business_id: "biz-skillget", department_id: "dept-sg-teacher",
+    objective: "先生（講師）管理を回す",
+    key_results: ["講師のシフト・品質を管理する"],
   },
-  // 石川：コンサル
   {
-    id: "ind-ishikawa-consul", user_id: "u-ishikawa", business_id: "biz-consul",
+    id: "ind-ishikawa-sg-student", user_id: "u-ishikawa", business_id: "biz-skillget", department_id: "dept-sg-student",
+    objective: "生徒管理・フォローを回す",
+    key_results: ["受講状況を管理し継続を支える"],
+  },
+  {
+    id: "ind-ishikawa-sg-coach", user_id: "u-ishikawa", business_id: "biz-skillget", department_id: "dept-sg-coach",
+    objective: "コーチングと教材を回す",
+    key_results: ["コーチングと宿題・教材を回す"],
+  },
+  {
+    id: "ind-ishikawa-sg-sns", user_id: "u-ishikawa", business_id: "biz-skillget", department_id: "dept-sg-sns",
+    objective: "SNS運用・集客を回す",
+    key_results: ["SNS運用とアポどりを回す"],
+  },
+  // 石川：コンサル（部署なし）
+  {
+    id: "ind-ishikawa-consul", user_id: "u-ishikawa", business_id: "biz-consul", department_id: null,
     objective: "コンサル案件（soulage KL）のSNS運用を立ち上げる",
     key_results: ["リール月7・ストーリー毎日・ポスト月15で運用する（インスタ＋小紅書）"],
   },
   // 大吾：AI（FwAI）＝初心者コース担当
   {
-    id: "ind-daigo-fwai", user_id: "u-daigo", business_id: "biz-fwai",
+    id: "ind-daigo-fwai", user_id: "u-daigo", business_id: "biz-fwai", department_id: null,
     objective: "FwAI（クロード研修）の初心者コースを担当する",
     key_results: ["初心者コースを運営する"],
   },
   // 太良：AI（FwAI）＝中級者コース〜成約まで担当
   {
-    id: "ind-taira-fwai", user_id: "u-taira", business_id: "biz-fwai",
+    id: "ind-taira-fwai", user_id: "u-taira", business_id: "biz-fwai", department_id: null,
     objective: "FwAI（クロード研修）の中級者コース〜成約までを担当する",
     key_results: ["中級者コースの提供と成約を進める"],
   },
-  // 大吾：コミュニティ
+  // 大吾：コミュニティ（部署なし）
   {
-    id: "ind-daigo-community", user_id: "u-daigo", business_id: "biz-community",
+    id: "ind-daigo-community", user_id: "u-daigo", business_id: "biz-community", department_id: null,
     objective: "コミュニティの立ち上げを主導する",
     key_results: ["立ち上げの要所を決める"],
   },
   // 石川：AI（CVC＝ノーマル/シンプルAI研修）
   {
-    id: "ind-ishikawa-cvc", user_id: "u-ishikawa", business_id: "biz-cvc",
+    id: "ind-ishikawa-cvc", user_id: "u-ishikawa", business_id: "biz-cvc", department_id: null,
     objective: "ノーマルAI研修（シンプルAI研修）の授業を回す",
     key_results: ["授業資料を用意し、授業を実施する"],
   },
-  // 鈴木：コミュニティ
+  // 鈴木：コミュニティ（部署なし）
   {
-    id: "ind-suzuki-community", user_id: "u-suzuki", business_id: "biz-community",
+    id: "ind-suzuki-community", user_id: "u-suzuki", business_id: "biz-community", department_id: null,
     objective: "コミュニティのメンバー集めと運営を担う",
     key_results: ["100人グループを組成する"],
   },
-  // インターン：コミュニティ
+  // インターン：コミュニティ（部署なし）
   {
-    id: "ind-intern-community", user_id: "u-intern", business_id: "biz-community",
+    id: "ind-intern-community", user_id: "u-intern", business_id: "biz-community", department_id: null,
     objective: "コンテンツ制作でコミュニティを支える",
     key_results: ["創始者の動画を仕上げる"],
   },
 ];
 
-// ── task_areas（業務エリア＝タスクのグループ）。今はスキルゲットのみ定義 ──
-export const taskAreas: TaskAreaRow[] = [
-  { id: "area-sg-teacher", business_id: "biz-skillget", name: "先生管理", sort_order: 1 },
-  { id: "area-sg-student", business_id: "biz-skillget", name: "生徒管理", sort_order: 2 },
-  { id: "area-sg-coach", business_id: "biz-skillget", name: "コーチング", sort_order: 3 },
-  { id: "area-sg-sns", business_id: "biz-skillget", name: "SNS", sort_order: 4 },
-];
-
 export const tasks: TaskRow[] = [
-  // 英会話＞スキルゲット（石川）── 業務エリア別（上限なしで全表示）
-  mk("t-sg-1", "ind-ishikawa-skillget", "biz-skillget", "area-sg-sns", "u-ishikawa", "インスタ運用", "medium", null, true, "u-ishikawa"),
-  mk("t-sg-2", "ind-ishikawa-skillget", "biz-skillget", "area-sg-coach", "u-ishikawa", "コーチング", "high", null, false),
-  mk("t-sg-3", "ind-ishikawa-skillget", "biz-skillget", "area-sg-teacher", "u-ishikawa", "講師管理", "medium", null, false),
-  mk("t-sg-4", "ind-ishikawa-skillget", "biz-skillget", "area-sg-student", "u-ishikawa", "生徒管理", "high", null, false),
-  mk("t-sg-5", "ind-ishikawa-skillget", "biz-skillget", "area-sg-sns", "u-ishikawa", "アポどり", "high", null, false),
-  mk("t-sg-6", "ind-ishikawa-skillget", "biz-skillget", "area-sg-coach", "u-ishikawa", "宿題・教材作成", "medium", null, false),
+  // 英会話＞スキルゲット（石川）── 部署ごと（先生管理/生徒管理/コーチング/SNS）
+  mk("t-sg-3", "ind-ishikawa-sg-teacher", "biz-skillget", "u-ishikawa", "講師管理", "medium", null, false),
+  mk("t-sg-4", "ind-ishikawa-sg-student", "biz-skillget", "u-ishikawa", "生徒管理", "high", null, false),
+  mk("t-sg-2", "ind-ishikawa-sg-coach", "biz-skillget", "u-ishikawa", "コーチング", "high", null, false),
+  mk("t-sg-6", "ind-ishikawa-sg-coach", "biz-skillget", "u-ishikawa", "宿題・教材作成", "medium", null, false),
+  mk("t-sg-1", "ind-ishikawa-sg-sns", "biz-skillget", "u-ishikawa", "インスタ運用", "medium", null, true, "u-ishikawa"),
+  mk("t-sg-5", "ind-ishikawa-sg-sns", "biz-skillget", "u-ishikawa", "アポどり", "high", null, false),
 
-  // AI事業（エリア未定義＝area_id:null）
+  // AI事業（部署なし）
   //  FwAI=大吾(初心者コース)＋太良(中級者コース〜成約) / ノーマルAI研修(CVC)=石川
-  mk("t-ai-daigo", "ind-daigo-fwai", "biz-fwai", null, "u-daigo", "クロード研修 初心者コースを担当（FwAI）", "medium", null, false),
-  mk("t-ai-taira", "ind-taira-fwai", "biz-fwai", null, "u-taira", "クロード研修 中級者コース〜成約までを担当（FwAI）", "high", null, false),
-  mk("t-ai-cvc", "ind-ishikawa-cvc", "biz-cvc", null, "u-ishikawa", "AI研修 授業資料の作成（ノーマル/シンプルAI研修・授業日は事前確定）", "high", null, false),
+  mk("t-ai-daigo", "ind-daigo-fwai", "biz-fwai", "u-daigo", "クロード研修 初心者コースを担当（FwAI）", "medium", null, false),
+  mk("t-ai-taira", "ind-taira-fwai", "biz-fwai", "u-taira", "クロード研修 中級者コース〜成約までを担当（FwAI）", "high", null, false),
+  mk("t-ai-cvc", "ind-ishikawa-cvc", "biz-cvc", "u-ishikawa", "AI研修 授業資料の作成（ノーマル/シンプルAI研修・授業日は事前確定）", "high", null, false),
 
-  // コミュニティ事業
-  mk("t-com-daigo", "ind-daigo-community", "biz-community", null, "u-daigo", "アンバサダーを決める", "high", null, false),
-  mk("t-com-suzuki", "ind-suzuki-community", "biz-community", null, "u-suzuki", "マレーシア留学生（日本人）100人をグループに入れる", "high", null, false),
-  mk("t-com-intern", "ind-intern-community", "biz-community", null, "u-intern", "創始者の動画編集", "medium", null, true, "u-intern"),
+  // コミュニティ事業（部署なし）
+  mk("t-com-daigo", "ind-daigo-community", "biz-community", "u-daigo", "アンバサダーを決める", "high", null, false),
+  mk("t-com-suzuki", "ind-suzuki-community", "biz-community", "u-suzuki", "マレーシア留学生（日本人）100人をグループに入れる", "high", null, false),
+  mk("t-com-intern", "ind-intern-community", "biz-community", "u-intern", "創始者の動画編集", "medium", null, true, "u-intern"),
 
-  // コンサル事業（石川）── soulage KL（8月中旬オープン）SNS運用：インスタ＋小紅書 両方
-  mk("t-con-reel", "ind-ishikawa-consul", "biz-consul", null, "u-ishikawa", "soulage：リールを月7本投稿（インスタ＋小紅書）", "high", null, false),
-  mk("t-con-story", "ind-ishikawa-consul", "biz-consul", null, "u-ishikawa", "soulage：ストーリーを毎日投稿（インスタ＋小紅書）", "high", null, false),
-  mk("t-con-post", "ind-ishikawa-consul", "biz-consul", null, "u-ishikawa", "soulage：フィード投稿を月15本（インスタ＋小紅書）", "medium", null, false),
+  // コンサル事業（石川・部署なし）── soulage KL（8月中旬オープン）SNS運用：インスタ＋小紅書 両方
+  mk("t-con-reel", "ind-ishikawa-consul", "biz-consul", "u-ishikawa", "soulage：リールを月7本投稿（インスタ＋小紅書）", "high", null, false),
+  mk("t-con-story", "ind-ishikawa-consul", "biz-consul", "u-ishikawa", "soulage：ストーリーを毎日投稿（インスタ＋小紅書）", "high", null, false),
+  mk("t-con-post", "ind-ishikawa-consul", "biz-consul", "u-ishikawa", "soulage：フィード投稿を月15本（インスタ＋小紅書）", "medium", null, false),
 ];
 
 /** タスク生成ヘルパー。done=true のとき completed_by / completed_at を埋める（監査用）。 */
@@ -196,7 +211,6 @@ function mk(
   id: string,
   individual_id: string,
   business_id: string,
-  area_id: string | null,
   assignee_id: string,
   title: string,
   priority: TaskRow["priority"],
@@ -208,7 +222,6 @@ function mk(
     id,
     individual_id,
     business_id,
-    area_id,
     assignee_id,
     title,
     priority,

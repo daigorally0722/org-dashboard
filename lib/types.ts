@@ -67,17 +67,11 @@ export interface BusinessRow {
   sort_order: number;
 }
 
-/** individuals テーブル：個人OKR。business_id はサブ事業（サブが無ければカテゴリ）を指す。 */
-export interface IndividualRow {
-  id: string;
-  user_id: string;
-  business_id: string;
-  objective: string;
-  key_results: string[];
-}
-
-/** task_areas テーブル：事業ごとの業務エリア（タスクのグループ）。 */
-export interface TaskAreaRow {
+/**
+ * departments テーブル：事業内の「部署」（例：スキルゲットの 先生管理/生徒管理/コーチング/SNS）。
+ * 規模の大きい事業だけ部署を持つ。持たない事業は 事業→個人 に直結する。
+ */
+export interface DepartmentRow {
   id: string;
   business_id: string;
   name: string;
@@ -85,8 +79,21 @@ export interface TaskAreaRow {
 }
 
 /**
+ * individuals テーブル：個人OKR。business_id はサブ事業（サブが無ければカテゴリ）を指す。
+ * department_id … 部署を持つ事業では所属部署を指す（null＝部署なし事業の個人）。
+ * ※ 1人が複数部署に関わる場合は（例：代表の石川）、部署ごとに individual レコードを持つ。
+ */
+export interface IndividualRow {
+  id: string;
+  user_id: string;
+  business_id: string;
+  department_id: string | null;
+  objective: string;
+  key_results: string[];
+}
+
+/**
  * tasks テーブル：個人にぶら下がるタスク。
- * area_id = 業務エリア（null＝未分類）。
  * assignee_id = 実行担当（本人だけチェック可／admin は代理可）。
  * completed_by / completed_at = 監査用（誰がいつ完了ボタンを押したか）。
  */
@@ -94,7 +101,6 @@ export interface TaskRow {
   id: string;
   individual_id: string;
   business_id: string;
-  area_id: string | null;
   assignee_id: string;
   title: string;
   priority: Priority;
@@ -114,13 +120,6 @@ export interface TaskView extends TaskRow {
   editable: boolean;
 }
 
-/** 業務エリアごとにまとめたタスク群（空エリアも tasks:[] で含める）。 */
-export interface TaskAreaView {
-  id: string;
-  name: string;
-  tasks: TaskView[];
-}
-
 export interface IndividualView {
   id: string;
   name: string;
@@ -129,11 +128,21 @@ export interface IndividualView {
   isSelf: boolean;
   objective: string;
   keyResults: string[];
-  tasks: TaskView[]; // 全タスク（進捗集計・概況用）
-  areaGroups: TaskAreaView[]; // 業務エリア別（空エリア含む）。空配列＝エリア未定義の事業
+  tasks: TaskView[];
 }
 
-/** サブ事業（または単独事業）ノード。 */
+/** 部署ノード（事業内の一段）。配下に個人を持つ。空部署も individuals:[] で含める。 */
+export interface DepartmentView {
+  id: string;
+  name: string;
+  individuals: IndividualView[];
+}
+
+/**
+ * サブ事業（または単独事業）ノード。
+ * departments を持つ事業（スキルゲット）は departments 経由で個人を表示、
+ * 持たない事業は individuals を直接表示する。
+ */
 export interface BusinessView {
   id: string;
   name: string;
@@ -141,6 +150,7 @@ export interface BusinessView {
   objective: string;
   keyResults: string[];
   isOwn: boolean;
+  departments: DepartmentView[];
   individuals: IndividualView[];
 }
 

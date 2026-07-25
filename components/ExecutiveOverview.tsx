@@ -27,7 +27,10 @@ const CATEGORY_COLORS: Record<string, string> = {
 function peopleOf(board: BoardView): IndividualView[] {
   return board.categories.flatMap((category) => [
     ...category.individuals,
-    ...category.subs.flatMap((business) => business.individuals),
+    ...category.subs.flatMap((business) => [
+      ...business.individuals,
+      ...business.departments.flatMap((dept) => dept.individuals),
+    ]),
   ]);
 }
 
@@ -60,7 +63,10 @@ export default function ExecutiveOverview({ board, getDone }: Props) {
   const categoryRows = board.categories.map((category) => {
     const categoryPeople = [
       ...category.individuals,
-      ...category.subs.flatMap((business) => business.individuals),
+      ...category.subs.flatMap((business) => [
+        ...business.individuals,
+        ...business.departments.flatMap((dept) => dept.individuals),
+      ]),
     ];
     const tasks = categoryPeople.flatMap((person) => person.tasks);
     const done = tasks.filter((task) => getDone(task.id)).length;

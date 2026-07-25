@@ -6,11 +6,12 @@ import type {
   BoardView,
   BusinessView,
   CategoryView,
+  DepartmentView,
   IndividualView,
   UserRow,
 } from "@/lib/types";
 import { CATEGORY_STYLE, CATEGORY_STYLE_DEFAULT } from "@/lib/layers";
-import TaskAreaGroups from "./TaskAreaGroups";
+import TaskRow from "./TaskRow";
 import { cn } from "@/lib/cn";
 
 // ============================================================================
@@ -94,14 +95,63 @@ function IndividualNode({ ind, h }: { ind: IndividualView; h: Helpers }) {
               <KeyResults items={ind.keyResults} />
             </div>
           )}
-          <TaskAreaGroups
-            areaGroups={ind.areaGroups}
-            tasks={ind.tasks}
-            getDone={h.getDone}
-            getCompletedByName={h.getCompletedByName}
-            canAudit={h.canAudit}
-            onToggle={h.onToggle}
-          />
+          <div className="space-y-1.5">
+            {ind.tasks.length === 0 ? (
+              <p className="text-xs text-slate-400">今週のタスクはありません</p>
+            ) : (
+              ind.tasks.map((t) => (
+                <TaskRow
+                  key={t.id}
+                  task={t}
+                  done={h.getDone(t.id)}
+                  completedByName={h.getCompletedByName(t.id)}
+                  canAudit={h.canAudit}
+                  onToggle={h.onToggle}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── 部署ノード（事業の一段下・スキルゲット等のみ） ──────────
+function DepartmentNode({ dept, accent, h }: { dept: DepartmentView; accent: string; h: Helpers }) {
+  const [open, setOpen] = useState(true);
+  const allTasks = dept.individuals.flatMap((i) => i.tasks);
+  const done = allTasks.filter((t) => h.getDone(t.id)).length;
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition-colors hover:bg-slate-50"
+      >
+        <ChevronRight className={cn("h-4 w-4 shrink-0 text-slate-400 transition-transform", open && "rotate-90")} />
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="text-sm font-bold text-slate-900">{dept.name}</span>
+            <span
+              className="rounded px-1.5 py-0.5 text-[10px] font-bold text-white"
+              style={{ backgroundColor: accent }}
+            >
+              部署
+            </span>
+          </span>
+        </span>
+        <Progress done={done} total={allTasks.length} />
+      </button>
+
+      {open && (
+        <div className="space-y-2 border-t border-slate-100 bg-slate-50/60 px-2.5 py-2.5">
+          {dept.individuals.length === 0 ? (
+            <p className="px-1 text-xs text-slate-400">メンバー未登録</p>
+          ) : (
+            dept.individuals.map((ind) => <IndividualNode key={ind.id} ind={ind} h={h} />)
+          )}
         </div>
       )}
     </div>
@@ -111,8 +161,12 @@ function IndividualNode({ ind, h }: { ind: IndividualView; h: Helpers }) {
 // ── サブ事業ノード ──────────────────────────────────────────
 function BusinessNode({ sub, accent, h }: { sub: BusinessView; accent: string; h: Helpers }) {
   const [open, setOpen] = useState(true);
-  const allTasks = sub.individuals.flatMap((i) => i.tasks);
+  const allTasks = [
+    ...sub.departments.flatMap((d) => d.individuals.flatMap((i) => i.tasks)),
+    ...sub.individuals.flatMap((i) => i.tasks),
+  ];
   const done = allTasks.filter((t) => h.getDone(t.id)).length;
+  const hasChildren = sub.departments.length > 0 || sub.individuals.length > 0;
 
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
@@ -150,10 +204,17 @@ function BusinessNode({ sub, accent, h }: { sub: BusinessView; accent: string; h
               <KeyResults items={sub.keyResults} />
             </div>
           )}
-          {sub.individuals.length === 0 ? (
+          {!hasChildren ? (
             <p className="px-1 text-xs text-slate-400">表示できるメンバーはいません</p>
           ) : (
-            sub.individuals.map((ind) => <IndividualNode key={ind.id} ind={ind} h={h} />)
+            <>
+              {sub.departments.map((dept) => (
+                <DepartmentNode key={dept.id} dept={dept} accent={accent} h={h} />
+              ))}
+              {sub.individuals.map((ind) => (
+                <IndividualNode key={ind.id} ind={ind} h={h} />
+              ))}
+            </>
           )}
         </div>
       )}
@@ -166,7 +227,10 @@ function CategoryNode({ cat, h }: { cat: CategoryView; h: Helpers }) {
   const [open, setOpen] = useState(cat.isOwnBranch || h.currentUser.role === "admin" || h.currentUser.role === "exec");
   const style = CATEGORY_STYLE[cat.colorKey] ?? CATEGORY_STYLE_DEFAULT;
   const allTasks = [
-    ...cat.subs.flatMap((s) => s.individuals.flatMap((i) => i.tasks)),
+    ...cat.subs.flatMap((s) => [
+      ...s.departments.flatMap((d) => d.individuals.flatMap((i) => i.tasks)),
+      ...s.individuals.flatMap((i) => i.tasks),
+    ]),
     ...cat.individuals.flatMap((i) => i.tasks),
   ];
   const done = allTasks.filter((t) => h.getDone(t.id)).length;
