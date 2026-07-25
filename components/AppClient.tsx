@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { BarChart3, LayoutDashboard, List, LogOut, Network } from "lucide-react";
+import { BarChart3, LayoutDashboard, List, LogOut, Network, FolderOpen } from "lucide-react";
 import type { UserRow } from "@/lib/types";
 import { buildBoard } from "@/lib/tree";
 import { tasks as seedTasks, users, CURRENT_WEEK_OF, CURRENT_MONTH_LABEL } from "@/lib/data";
@@ -10,6 +10,7 @@ import LoginScreen from "./LoginScreen";
 import OkrTree from "./OkrTree";
 import OkrCascade from "./OkrCascade";
 import ExecutiveOverview from "./ExecutiveOverview";
+import MaterialsView from "./MaterialsView";
 import { cn } from "@/lib/cn";
 
 // ============================================================================
@@ -44,7 +45,7 @@ function nameOf(userId: string | null): string | null {
 export default function AppClient() {
   const [hydrated, setHydrated] = useState(false);
   const [user, setUser] = useState<UserRow | null>(null);
-  const [view, setView] = useState<"overview" | "tree" | "list">("overview");
+  const [view, setView] = useState<"overview" | "tree" | "list" | "materials">("overview");
   const [taskState, setTaskState] = useState<Record<string, TaskState>>(seedState);
 
   // マウント後にセッションと保存済み完了状態を復元
@@ -190,10 +191,13 @@ export default function AppClient() {
             <button type="button" onClick={() => setView("list")} className={cn("view-tab", view === "list" && "view-tab-active")}>
               <List className="h-3.5 w-3.5" /> タスク
             </button>
+            <button type="button" onClick={() => setView("materials")} className={cn("view-tab", view === "materials" && "view-tab-active")}>
+              <FolderOpen className="h-3.5 w-3.5" /> 資料
+            </button>
           </div>
         </div>
 
-        {board.canAudit && (
+        {board.canAudit && view !== "materials" && (
           <div className="mb-4 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-2.5 text-[11px] text-blue-700">
             <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
             管理ビュー：下位メンバーの進捗と完了履歴を確認できます。
@@ -204,6 +208,8 @@ export default function AppClient() {
           <ExecutiveOverview board={board} getDone={getDone} />
         ) : view === "tree" ? (
           <OkrCascade board={board} helpers={helpers} />
+        ) : view === "materials" ? (
+          <MaterialsView />
         ) : (
           <div className="mx-auto max-w-3xl">
             <OkrTree board={board} helpers={helpers} />

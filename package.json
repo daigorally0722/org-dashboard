@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "gen:materials": "node scripts/gen-materials.mjs",
+    "predev": "node scripts/gen-materials.mjs",
+    "prebuild": "node scripts/gen-materials.mjs",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
