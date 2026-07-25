@@ -183,16 +183,6 @@ export interface MaterialRow {
   category: string; // 教材 / スライド / データ / Web資料 ...
   size: string; // "12.4MB" 等
   updated: string; // YYYY-MM-DD
-  url?: string | null; // 後から付ける Drive 等の外部URL（任意）
-}
-
-/** Drive / Notion / GitHub など外部ツールへのリンク。 */
-export interface ExternalLinkRow {
-  id: string;
-  name: string;
-  tool: "drive" | "notion" | "github" | "sheet" | "other";
-  url: string;
-  note?: string;
 }
 
 /** 事業カテゴリ id → 配色キー。 */
